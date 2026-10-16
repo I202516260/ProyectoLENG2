@@ -1,0 +1,75 @@
+package com.petshop.spring_web_crud.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.petshop.spring_web_crud.dto.ProductoFilter;
+import com.petshop.spring_web_crud.dto.ResultadoResponse;
+import com.petshop.spring_web_crud.model.Producto;
+import com.petshop.spring_web_crud.repository.ProductoRepository;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class ProductoService {
+    
+    private final ProductoRepository productoRepository;
+    
+    public List<Producto> getAll() {
+        return productoRepository.findAllByOrderByIdProductoDesc();
+    }
+    
+    public List<Producto> search(ProductoFilter filter) {
+        return productoRepository.findByFilters(filter.idCategoria());
+    }
+    
+    @Transactional
+    public ResultadoResponse create(Producto producto) {
+        try {
+            var registrado = productoRepository.save(producto);
+            var mensaje = String.format("Producto con Id %d registrado", registrado.getIdProducto());
+            return new ResultadoResponse(true, mensaje);    
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResultadoResponse(false, "Hubo un error en la transacción");
+        }
+    }
+    
+    public Producto getOne(Integer id) {
+        return productoRepository.findById(id).orElse(null);
+    }
+    
+    @Transactional
+    public ResultadoResponse update(Producto producto) {
+        try {
+            var registrado = productoRepository.save(producto);
+            var mensaje = String.format("Producto con Id %d actualizado", registrado.getIdProducto());
+            return new ResultadoResponse(true, mensaje);    
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResultadoResponse(false, "Hubo un error en la transacción");
+        }
+    }
+    
+    @Transactional
+    public ResultadoResponse changeActive(Integer id) {
+        try {
+            var producto = productoRepository.findById(id).orElse(null);
+            
+            if(producto == null) {
+                return new ResultadoResponse(false, "Producto no encontrado");
+            }
+            
+            producto.setActivo(!producto.getActivo());
+            var mensaje = String.format("Producto con Id %d %s", id, producto.getActivo() ? "activado" : "inactivado");
+            
+            return new ResultadoResponse(true, mensaje);    
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResultadoResponse(false, "Hubo un error en la transacción");
+        }
+    }
+}
